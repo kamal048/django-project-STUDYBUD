@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .models import Room, Topic
@@ -19,6 +21,12 @@ def loginpage(request):
             user=User.objects.get(username=username)
         except:
             messages.error(request, "User does not exist.")
+        user=authenticate(request,username=username,password=password)
+        if user is not None:
+            login(request,user)
+            return redirect('home')
+        else:
+            messages.error(request, "Username or Password does not exist.")
     context={}
     return render(request,'base/login_register.html',context)
 
@@ -37,6 +45,7 @@ def room(request,pk):
     context={'room':room}
     return render(request, 'base/room.html',context)
 
+@login_required(login_url='/login')
 def createroom(request):
     form=RoomForm()
     if request.method=='POST':
@@ -64,3 +73,7 @@ def deleteroom(request,pk):
         room.delete()
         return redirect('home')
     return render(request,'base/delete.html',{'obj':room})
+
+def logoutuser(request):
+    logout(request)
+    return redirect('home')
